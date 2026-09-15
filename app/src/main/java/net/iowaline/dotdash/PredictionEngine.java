@@ -15,8 +15,8 @@ final class PredictionEngine {
     private String currentTag = "pt-BR";
 
     PredictionEngine(AssetManager assets) {
-        addPack(assets, "pt-BR", "PT", "language/pt-BR.txt.gz");
-        addPack(assets, "en-US", "EN", "language/en-US.txt.gz");
+        addPack(assets, "pt-BR", "PT", "language/pt-BR.dat");
+        addPack(assets, "en-US", "EN", "language/en-US.dat");
     }
 
     private void addPack(AssetManager assets, String tag, String label, String path) {
