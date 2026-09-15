@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">DotDash Keyboard</string>
+    <string name="app_name">DotDash Modern</string>
     <string name="caps_lock_off">caps</string>
     <string name="caps_lock_next">Caps</string>
     <string name="caps_lock_all">CAPS</string>

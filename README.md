@@ -2,6 +2,30 @@ DotDash Keyboard
 
 The world's most popular open source Morse code keyboard for Android! (probably)
 
+Modern fork MVP
+---------------
+
+This branch modernizes the original project for current Android devices while
+preserving its untimed dot/dash input model.
+
+MVP additions:
+
+* Android Gradle Plugin 8.7, API 35 target, Java 17, and Android 6+ support.
+* Offline word completion with replaceable `LanguagePack` data modules.
+* Built-in Brazilian Portuguese and US English starter packs.
+* A three-item suggestion strip and an in-keyboard language switch.
+* Unicode accent composition. Tap the accent key to cycle acute, circumflex,
+  tilde, grave, and diaeresis, then enter the base letter in Morse.
+* No network permissions. Suggestions are disabled in password fields.
+
+Build the debug APK with Android Studio (JDK 17 and Android SDK 35 installed),
+or from a configured command line with `./gradlew assembleDebug`. The output is
+`app/build/outputs/apk/debug/app-debug.apk`.
+
+The bundled dictionaries are intentionally small and prove the package API;
+production language packs should use frequency-ranked word lists and a compact
+trie or finite-state representation.
+
 ![](https://raw.githubusercontent.com/agwells/dotdash-keyboard-android/master/res/drawable-hdpi/ic_launcher.png)
 
 DotDash Keyboard is also available in:

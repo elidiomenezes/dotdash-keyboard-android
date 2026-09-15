@@ -17,10 +17,13 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.ExtractedText;
 import android.view.inputmethod.ExtractedTextRequest;
 import android.view.inputmethod.InputConnection;
+import android.text.InputType;
+import android.widget.Button;
 
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Locale;
+import java.util.ArrayList;
 
 @SuppressWarnings("JavaDoc")
 public class DotDashIMEService extends InputMethodService implements
@@ -35,6 +38,12 @@ public class DotDashIMEService extends InputMethodService implements
     private int capsLockKeyIndex;
     private Hashtable<String, String> morseMap;
     private StringBuilder charInProgress;
+    private final PredictionEngine predictionEngine = new PredictionEngine();
+    private final AccentComposer accentComposer = new AccentComposer();
+    private final List<Button> suggestionButtons = new ArrayList<>();
+    private Button languageButton;
+    private Button accentButton;
+    private boolean predictionAllowed = true;
 
     private static final int CAPS_LOCK_OFF = 0;
     private static final int CAPS_LOCK_NEXT = 1;
@@ -231,14 +240,30 @@ public class DotDashIMEService extends InputMethodService implements
     @SuppressLint("InflateParams")
     @Override
     public View onCreateInputView() {
-        inputView = (DotDashKeyboardView) getLayoutInflater().inflate(
-                R.layout.input, null);
+        View root = getLayoutInflater().inflate(R.layout.input, null);
+        inputView = root.findViewById(R.id.keyboard_view);
         inputView.setOnKeyboardActionListener(this);
         inputView.setKeyboard(dotDashKeyboard);
         inputView.setService(this);
         inputView.mEnableUtilityKeyboard = prefs.getBoolean(
                 DotDashPrefs.ENABLE_UTIL_KBD, false);
-        return inputView;
+        languageButton = root.findViewById(R.id.language_button);
+        accentButton = root.findViewById(R.id.accent_button);
+        suggestionButtons.clear();
+        suggestionButtons.add((Button) root.findViewById(R.id.suggestion_1));
+        suggestionButtons.add((Button) root.findViewById(R.id.suggestion_2));
+        suggestionButtons.add((Button) root.findViewById(R.id.suggestion_3));
+        languageButton.setText(predictionEngine.current().shortName);
+        languageButton.setOnClickListener(v -> {
+            languageButton.setText(predictionEngine.next().shortName);
+            refreshSuggestions();
+        });
+        accentButton.setOnClickListener(v -> accentButton.setText(accentComposer.nextLabel()));
+        for (Button button : suggestionButtons) {
+            button.setOnClickListener(v -> acceptSuggestion(((Button) v).getText().toString()));
+        }
+        refreshSuggestions();
+        return root;
     }
 
     public void onKey(int primaryCode, int[] keyCodes) {
@@ -347,6 +372,7 @@ public class DotDashIMEService extends InputMethodService implements
 
                 if (charInProgress.length() == 0) {
                     getCurrentInputConnection().commitText(" ", 1);
+                    refreshSuggestions();
                 } else {
                     commitCodeGroup(false);
                 }
@@ -364,6 +390,7 @@ public class DotDashIMEService extends InputMethodService implements
                     updateSpaceKey(true);
                 } else {
                     sendDownUpKeyEvents(primaryCode);
+                    refreshSuggestions();
 
                     if (capsLockState == CAPS_LOCK_NEXT) {
                         // If you've hit delete and you were in caps_next state,
@@ -424,10 +451,14 @@ public class DotDashIMEService extends InputMethodService implements
                 curCharMatch = curCharMatch.toUpperCase(Locale.US);
             }
 
+            curCharMatch = accentComposer.apply(curCharMatch);
+            if (accentButton != null) accentButton.setText("´");
+
             // Log.d(TAG, "Char identified as " + curCharMatch);
             InputConnection ic = getCurrentInputConnection();
             if (ic != null) {
                 ic.commitText(curCharMatch, curCharMatch.length());
+                refreshSuggestions();
             }
 
         }
@@ -477,6 +508,8 @@ public class DotDashIMEService extends InputMethodService implements
 
     private void clearEverything() {
         clearCharInProgress();
+        accentComposer.clear();
+        if (accentButton != null) accentButton.setText("´");
         capsLockState = CAPS_LOCK_OFF;
         updateCapsLockKey(false);
         updateSpaceKey(false);
@@ -553,11 +586,19 @@ public class DotDashIMEService extends InputMethodService implements
         // Log.d(TAG, "onStartInputView");
         super.onStartInputView(info, restarting);
 
+        int inputClass = info.inputType & InputType.TYPE_MASK_CLASS;
+        int variation = info.inputType & InputType.TYPE_MASK_VARIATION;
+        predictionAllowed = inputClass == InputType.TYPE_CLASS_TEXT
+                && variation != InputType.TYPE_TEXT_VARIATION_PASSWORD
+                && variation != InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
+                && variation != InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD;
+
 //		// Wrapping this in a try/catch block to avoid crashes in Android 2.1
 //		// and earlier
         updateAutoCap();
         updateCapsLockKey(true);
         updateSpaceKey(true);
+        refreshSuggestions();
     }
 
     @Override
@@ -658,6 +699,41 @@ public class DotDashIMEService extends InputMethodService implements
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd,
                 candidatesStart, candidatesEnd);
         updateAutoCap();
+        refreshSuggestions();
+    }
+
+    private String currentWord() {
+        InputConnection connection = getCurrentInputConnection();
+        if (connection == null) return "";
+        CharSequence before = connection.getTextBeforeCursor(64, 0);
+        if (before == null) return "";
+        int start = before.length();
+        while (start > 0 && Character.isLetter(before.charAt(start - 1))) start--;
+        return before.subSequence(start, before.length()).toString();
+    }
+
+    private void refreshSuggestions() {
+        if (suggestionButtons.isEmpty()) return;
+        List<String> suggestions = predictionAllowed
+                ? predictionEngine.suggest(currentWord()) : new ArrayList<>();
+        for (int i = 0; i < suggestionButtons.size(); i++) {
+            Button button = suggestionButtons.get(i);
+            String value = i < suggestions.size() ? suggestions.get(i) : "";
+            button.setText(value);
+            button.setEnabled(!value.isEmpty());
+        }
+    }
+
+    private void acceptSuggestion(String suggestion) {
+        if (suggestion.isEmpty()) return;
+        InputConnection connection = getCurrentInputConnection();
+        if (connection == null) return;
+        String word = currentWord();
+        connection.beginBatchEdit();
+        connection.deleteSurroundingText(word.length(), 0);
+        connection.commitText(suggestion + " ", 1);
+        connection.endBatchEdit();
+        refreshSuggestions();
     }
 
     /**

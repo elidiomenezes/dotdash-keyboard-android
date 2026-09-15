@@ -1,11 +1,32 @@
-<net.iowaline.dotdash.DotDashKeyboardView
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_alignParentBottom="true"
-    android:layout_width="fill_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/keyboard_background_holo"
-    android:keyBackground="@drawable/dotdash_key"
-    android:keyTextColor="@color/key_text_color_holo"
-    android:keyTextSize="22sp"
-    android:labelTextSize="22sp"
-/>
+    android:orientation="vertical"
+    android:background="@drawable/keyboard_background_holo">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal">
+
+        <Button android:id="@+id/language_button" android:layout_width="56dp"
+            android:layout_height="match_parent" android:text="PT" />
+        <Button android:id="@+id/accent_button" android:layout_width="48dp"
+            android:layout_height="match_parent" android:text="´" />
+        <Button android:id="@+id/suggestion_1" style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" />
+        <Button android:id="@+id/suggestion_2" style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" />
+        <Button android:id="@+id/suggestion_3" style="?android:attr/buttonStyleSmall"
+            android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" />
+    </LinearLayout>
+
+    <net.iowaline.dotdash.DotDashKeyboardView
+        android:id="@+id/keyboard_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:keyBackground="@drawable/dotdash_key"
+        android:keyTextColor="@color/key_text_color_holo"
+        android:keyTextSize="22sp"
+        android:labelTextSize="22sp" />
+</LinearLayout>
