@@ -25,13 +25,19 @@
 	>
 
 	<Row
-		android:keyWidth="50%"
+		android:keyWidth="45%"
 		android:rowEdgeFlags="top"
 		android:keyHeight="15%"
 	>
 		<Key
-		    android:keyIcon="@drawable/sym_keyboard_dot"
+			android:keyLabel="´"
 			android:keyEdgeFlags="left"
+			android:keyWidth="10%"
+			android:codes="-50"
+			android:isSticky="true"
+			/>
+		<Key
+		    android:keyIcon="@drawable/sym_keyboard_dot"
 			android:codes="0"
 			/>
 		<Key
@@ -42,7 +48,7 @@
 	</Row>
 
 	<Row
-		android:keyWidth="20%"
+		android:keyWidth="25%"
 		android:rowEdgeFlags="bottom"
 		android:keyHeight="12.75%"
 	>
@@ -53,14 +59,9 @@
 			android:isSticky="true"
 			/>
 		<Key
-			android:keyLabel="´"
-			android:codes="-50"
-			android:isSticky="true"
-			/>
-		<Key
 			android:keyLabel=" "
 			android:codes="62"
-			android:keyWidth="40%"
+			android:keyWidth="50%"
             android:isRepeatable="false"
 			/>
 		<Key
