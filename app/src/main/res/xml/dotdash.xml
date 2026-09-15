@@ -25,14 +25,14 @@
 	>
 
 	<Row
-		android:keyWidth="45%"
+		android:keyWidth="40%"
 		android:rowEdgeFlags="top"
 		android:keyHeight="15%"
 	>
 		<Key
 			android:keyLabel="´"
 			android:keyEdgeFlags="left"
-			android:keyWidth="10%"
+			android:keyWidth="20%"
 			android:codes="-50"
 			android:isSticky="true"
 			/>
