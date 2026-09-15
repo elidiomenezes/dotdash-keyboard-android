@@ -38,7 +38,7 @@ public class DotDashIMEService extends InputMethodService implements
     private int capsLockKeyIndex;
     private Hashtable<String, String> morseMap;
     private StringBuilder charInProgress;
-    private final PredictionEngine predictionEngine = new PredictionEngine();
+    private PredictionEngine predictionEngine;
     private final AccentComposer accentComposer = new AccentComposer();
     private final List<Button> suggestionButtons = new ArrayList<>();
     private Button languageButton;
@@ -96,6 +96,7 @@ public class DotDashIMEService extends InputMethodService implements
     @Override
     public void onCreate() {
         super.onCreate();
+        predictionEngine = new PredictionEngine(getAssets());
         PreferenceManager.setDefaultValues(this, R.xml.prefs, false);
 
         // TODO: Fetch prefs via a background thread, as described here:
@@ -253,9 +254,11 @@ public class DotDashIMEService extends InputMethodService implements
         suggestionButtons.add((Button) root.findViewById(R.id.suggestion_1));
         suggestionButtons.add((Button) root.findViewById(R.id.suggestion_2));
         suggestionButtons.add((Button) root.findViewById(R.id.suggestion_3));
-        languageButton.setText(predictionEngine.current().shortName);
+        LanguagePack initialPack = predictionEngine.current();
+        languageButton.setText(initialPack == null ? "--" : initialPack.shortName);
         languageButton.setOnClickListener(v -> {
-            languageButton.setText(predictionEngine.next().shortName);
+            LanguagePack nextPack = predictionEngine.next();
+            languageButton.setText(nextPack == null ? "--" : nextPack.shortName);
             refreshSuggestions();
         });
         accentButton.setOnClickListener(v -> accentButton.setText(accentComposer.nextLabel()));

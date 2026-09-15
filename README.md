@@ -12,7 +12,8 @@ MVP additions:
 
 * Android Gradle Plugin 8.7, API 35 target, Java 17, and Android 6+ support.
 * Offline word completion with replaceable `LanguagePack` data modules.
-* Built-in Brazilian Portuguese and US English starter packs.
+* Built-in Brazilian Portuguese and US English packs with 50,000 source entries
+  each, frequency-ranked from the FrequencyWords corpus (CC BY-SA 4.0).
 * A three-item suggestion strip and an in-keyboard language switch.
 * Unicode accent composition. Tap the accent key to cycle acute, circumflex,
   tilde, grave, and diaeresis, then enter the base letter in Morse.
@@ -22,9 +23,10 @@ Build the debug APK with Android Studio (JDK 17 and Android SDK 35 installed),
 or from a configured command line with `./gradlew assembleDebug`. The output is
 `app/build/outputs/apk/debug/app-debug.apk`.
 
-The bundled dictionaries are intentionally small and prove the package API;
-production language packs should use frequency-ranked word lists and a compact
-trie or finite-state representation.
+Language assets are indexed by their first two normalized characters at load
+time. Suggestions retain corpus frequency order without scanning the complete
+dictionary after each keystroke. See `app/src/main/assets/language/NOTICE.txt`
+for data attribution and licensing.
 
 ![](https://raw.githubusercontent.com/agwells/dotdash-keyboard-android/master/res/drawable-hdpi/ic_launcher.png)
 
