@@ -8,8 +8,8 @@ android {
         applicationId "io.github.dotdashmodern.keyboard"
         minSdk 23
         targetSdk 35
-        versionCode 22
-        versionName "2.1.1-mvp"
+        versionCode 23
+        versionName "2.2.0-mvp"
     }
 
     buildTypes {
