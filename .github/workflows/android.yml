@@ -2,7 +2,7 @@ name: Android MVP
 
 on:
   push:
-    branches: [ modern-mvp ]
+    branches: [ modern-mvp, latinime-prediction ]
   pull_request:
 
 jobs:
