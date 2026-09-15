@@ -17,6 +17,9 @@ MVP additions:
 * A three-item suggestion strip and an in-keyboard language switch.
 * Unicode accent composition. Tap the accent key to cycle acute, circumflex,
   tilde, grave, and diaeresis, then enter the base letter in Morse.
+* Compact keyboard rows (25% shorter). Hold Space to switch language. The
+  accent key is part of the bottom row: a deliberate tap toggles it, while
+  rapid repeated taps cycle through the available diacritics.
 * No network permissions. Suggestions are disabled in password fields.
 
 Build the debug APK with Android Studio (JDK 17 and Android SDK 35 installed),

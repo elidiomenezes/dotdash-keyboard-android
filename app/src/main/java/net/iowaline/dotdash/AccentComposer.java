@@ -6,11 +6,21 @@ final class AccentComposer {
     private static final String[] MARKS = {"", "\u0301", "\u0302", "\u0303", "\u0300", "\u0308"};
     private static final String[] LABELS = {"´", "´", "^", "~", "`", "¨"};
     private int selected = 0;
+    private long lastTap;
+    private static final long RAPID_TAP_MS = 500;
 
-    String nextLabel() {
-        selected = selected % (MARKS.length - 1) + 1;
-        return LABELS[selected];
+    void tap(long now) {
+        if (!pending()) {
+            selected = 1;
+        } else if (now - lastTap <= RAPID_TAP_MS) {
+            selected = selected % (MARKS.length - 1) + 1;
+        } else {
+            selected = 0;
+        }
+        lastTap = now;
     }
+
+    String label() { return pending() ? LABELS[selected] : "´"; }
 
     boolean pending() { return selected != 0; }
 

@@ -27,7 +27,7 @@
 	<Row
 		android:keyWidth="50%"
 		android:rowEdgeFlags="top"
-		android:keyHeight="20%"
+		android:keyHeight="15%"
 	>
 		<Key
 		    android:keyIcon="@drawable/sym_keyboard_dot"
@@ -42,9 +42,9 @@
 	</Row>
 
 	<Row
-		android:keyWidth="25%"
+		android:keyWidth="20%"
 		android:rowEdgeFlags="bottom"
-		android:keyHeight="17%"
+		android:keyHeight="12.75%"
 	>
 		<Key
 			android:keyLabel="@string/caps_lock_off"
@@ -53,9 +53,14 @@
 			android:isSticky="true"
 			/>
 		<Key
+			android:keyLabel="´"
+			android:codes="-50"
+			android:isSticky="true"
+			/>
+		<Key
 			android:keyLabel=" "
 			android:codes="62"
-			android:keyWidth="50%"
+			android:keyWidth="40%"
             android:isRepeatable="false"
 			/>
 		<Key
@@ -67,4 +72,3 @@
 	</Row>
 
 </Keyboard>
-    

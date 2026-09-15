@@ -10,6 +10,7 @@ public class DotDashKeyboard extends Keyboard {
 
     public static final int KEYCODE_DOT = 0;
     public static final int KEYCODE_DASH = 1;
+    public static final int KEYCODE_ACCENT = -50;
 
     public DotDashKeyboard(Context context, int xmlLayoutResId) {
         super(context, xmlLayoutResId);
@@ -17,6 +18,7 @@ public class DotDashKeyboard extends Keyboard {
 
     public Keyboard.Key spaceKey;
     public Keyboard.Key capsLockKey;
+    public Keyboard.Key accentKey;
     public Keyboard.Key leftDotdashKey;
     public Keyboard.Key rightDotdashKey;
 
@@ -37,6 +39,9 @@ public class DotDashKeyboard extends Keyboard {
                 break;
             case 59:
                 capsLockKey = k;
+                break;
+            case KEYCODE_ACCENT:
+                accentKey = k;
                 break;
         }
         return k;

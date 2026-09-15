@@ -41,8 +41,7 @@ public class DotDashIMEService extends InputMethodService implements
     private PredictionEngine predictionEngine;
     private final AccentComposer accentComposer = new AccentComposer();
     private final List<Button> suggestionButtons = new ArrayList<>();
-    private Button languageButton;
-    private Button accentButton;
+    private int accentKeyIndex;
     private boolean predictionAllowed = true;
 
     private static final int CAPS_LOCK_OFF = 0;
@@ -219,6 +218,7 @@ public class DotDashIMEService extends InputMethodService implements
         List<Keyboard.Key> keys = dotDashKeyboard.getKeys();
         spaceKeyIndex = keys.indexOf(spaceKey);
         capsLockKeyIndex = keys.indexOf(capsLockKey);
+        accentKeyIndex = keys.indexOf(dotDashKeyboard.accentKey);
         if (isAudio()) {
             loadSoundPool();
         }
@@ -248,20 +248,10 @@ public class DotDashIMEService extends InputMethodService implements
         inputView.setService(this);
         inputView.mEnableUtilityKeyboard = prefs.getBoolean(
                 DotDashPrefs.ENABLE_UTIL_KBD, false);
-        languageButton = root.findViewById(R.id.language_button);
-        accentButton = root.findViewById(R.id.accent_button);
         suggestionButtons.clear();
         suggestionButtons.add((Button) root.findViewById(R.id.suggestion_1));
         suggestionButtons.add((Button) root.findViewById(R.id.suggestion_2));
         suggestionButtons.add((Button) root.findViewById(R.id.suggestion_3));
-        LanguagePack initialPack = predictionEngine.current();
-        languageButton.setText(initialPack == null ? "--" : initialPack.shortName);
-        languageButton.setOnClickListener(v -> {
-            LanguagePack nextPack = predictionEngine.next();
-            languageButton.setText(nextPack == null ? "--" : nextPack.shortName);
-            refreshSuggestions();
-        });
-        accentButton.setOnClickListener(v -> accentButton.setText(accentComposer.nextLabel()));
         for (Button button : suggestionButtons) {
             button.setOnClickListener(v -> acceptSuggestion(((Button) v).getText().toString()));
         }
@@ -417,6 +407,10 @@ public class DotDashIMEService extends InputMethodService implements
                 }
                 updateCapsLockKey(false);
                 break;
+            case DotDashKeyboard.KEYCODE_ACCENT:
+                accentComposer.tap(android.os.SystemClock.elapsedRealtime());
+                updateAccentKey(true);
+                break;
         }
     }
 
@@ -455,7 +449,7 @@ public class DotDashIMEService extends InputMethodService implements
             }
 
             curCharMatch = accentComposer.apply(curCharMatch);
-            if (accentButton != null) accentButton.setText("´");
+            updateAccentKey(true);
 
             // Log.d(TAG, "Char identified as " + curCharMatch);
             InputConnection ic = getCurrentInputConnection();
@@ -512,7 +506,7 @@ public class DotDashIMEService extends InputMethodService implements
     private void clearEverything() {
         clearCharInProgress();
         accentComposer.clear();
-        if (accentButton != null) accentButton.setText("´");
+        updateAccentKey(false);
         capsLockState = CAPS_LOCK_OFF;
         updateCapsLockKey(false);
         updateSpaceKey(false);
@@ -555,7 +549,8 @@ public class DotDashIMEService extends InputMethodService implements
      * @param refreshScreen
      */
     private void updateSpaceKey(boolean refreshScreen) {
-        String newLabel = charInProgress.toString();
+        String newLabel = charInProgress.length() == 0
+                ? predictionEngine.currentLabel() : charInProgress.toString();
 
         // Workaround to maintain consistent styling. Android puts multi-character
         // labels in bold, and single-characters in non-bold. To make the bold state
@@ -582,6 +577,20 @@ public class DotDashIMEService extends InputMethodService implements
                 }
             }
         }
+    }
+
+    private void updateAccentKey(boolean refreshScreen) {
+        Keyboard.Key key = dotDashKeyboard == null ? null : dotDashKeyboard.accentKey;
+        if (key == null) return;
+        key.on = accentComposer.pending();
+        key.label = accentComposer.label();
+        if (refreshScreen && inputView != null) inputView.invalidateKey(accentKeyIndex);
+    }
+
+    public void cycleLanguage() {
+        predictionEngine.next();
+        updateSpaceKey(true);
+        refreshSuggestions();
     }
 
     public void onStartInputView(android.view.inputmethod.EditorInfo info,

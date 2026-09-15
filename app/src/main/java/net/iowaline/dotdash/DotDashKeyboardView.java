@@ -11,6 +11,7 @@ import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -47,7 +48,6 @@ public class DotDashKeyboardView extends KeyboardView {
 
     private static final int REPEAT_INTERVAL = 50; // ~20 keys per second
     private static final int REPEAT_START_DELAY = 400;
-    @SuppressWarnings("unused")
     private static final int LONG_PRESS_TIMEOUT = ViewConfiguration.getLongPressTimeout();
     private static final int DEBOUNCE_TIMEOUT = 50; //70;
     private static final int IAMBIC_DOT_LENGTH = 100;
@@ -58,6 +58,8 @@ public class DotDashKeyboardView extends KeyboardView {
     private static final int MSG_KEY_REPEAT = 1;
     public static final int MSG_IAMBIC_PLAYING = 2;
     public static final int MSG_AUTOCOMMIT = 3;
+    private static final int MSG_SPACE_LONG_PRESS = 4;
+    private boolean spaceLongPressed = false;
     // TODO: according to this documentation: http://www.morsecode.nl/iambic.PDF
     // ... it appears that the logic is supposed to be that it "locks" if the
     // opposite key is still held down at the halfway point of the preceding
@@ -137,6 +139,11 @@ public class DotDashKeyboardView extends KeyboardView {
                             break;
                         case MSG_AUTOCOMMIT:
                             service.commitCodeGroup(true);
+                            break;
+                        case MSG_SPACE_LONG_PRESS:
+                            spaceLongPressed = true;
+                            service.cycleLanguage();
+                            performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                             break;
                     }
 
@@ -476,6 +483,10 @@ public class DotDashKeyboardView extends KeyboardView {
                 if (service.iambicModeB && service.dotDashKeyboard.leftDotdashKey.pressed && service.dotDashKeyboard.rightDotdashKey.pressed) {
                     this.iambic_both_pressed = true;
                 }
+            } else if (k == service.dotDashKeyboard.spaceKey) {
+                spaceLongPressed = false;
+                handler.removeMessages(MSG_SPACE_LONG_PRESS);
+                handler.sendEmptyMessageDelayed(MSG_SPACE_LONG_PRESS, LONG_PRESS_TIMEOUT);
             } else {
                 getOnKeyboardActionListener().onKey(k.codes[0], k.codes);
 
@@ -501,6 +512,15 @@ public class DotDashKeyboardView extends KeyboardView {
 
             k.pressed = false;
             getOnKeyboardActionListener().onRelease(k.codes[0]);
+            if (k == service.dotDashKeyboard.spaceKey) {
+                handler.removeMessages(MSG_SPACE_LONG_PRESS);
+                boolean normalRelease = actionMasked == MotionEvent.ACTION_UP
+                        || actionMasked == MotionEvent.ACTION_POINTER_UP;
+                if (!spaceLongPressed && normalRelease) {
+                    getOnKeyboardActionListener().onKey(k.codes[0], k.codes);
+                }
+                spaceLongPressed = false;
+            }
             if (k.repeatable) {
                 handler.removeMessages(MSG_KEY_REPEAT, k);
             }

@@ -6,13 +6,9 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="36dp"
         android:orientation="horizontal">
 
-        <Button android:id="@+id/language_button" android:layout_width="56dp"
-            android:layout_height="match_parent" android:text="PT" />
-        <Button android:id="@+id/accent_button" android:layout_width="48dp"
-            android:layout_height="match_parent" android:text="´" />
         <Button android:id="@+id/suggestion_1" style="?android:attr/buttonStyleSmall"
             android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" />
         <Button android:id="@+id/suggestion_2" style="?android:attr/buttonStyleSmall"

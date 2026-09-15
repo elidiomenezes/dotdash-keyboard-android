@@ -34,6 +34,11 @@ final class PredictionEngine {
 
     LanguagePack current() { return packs.get(currentTag); }
 
+    String currentLabel() {
+        LanguagePack pack = current();
+        return pack == null ? "--" : pack.shortName;
+    }
+
     LanguagePack next() {
         List<String> tags = Arrays.asList(packs.keySet().toArray(new String[0]));
         if (tags.isEmpty()) return null;
