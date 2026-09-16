@@ -735,13 +735,20 @@ public class DotDashIMEService extends InputMethodService implements
     private void refreshSuggestions() {
         if (suggestionButtons.isEmpty()) return;
         List<String> suggestions = predictionAllowed
-                ? predictionEngine.suggest(currentWord()) : new ArrayList<>();
+                ? predictionEngine.suggest(textBeforeCursor()) : new ArrayList<>();
         for (int i = 0; i < suggestionButtons.size(); i++) {
             Button button = suggestionButtons.get(i);
             String value = i < suggestions.size() ? suggestions.get(i) : "";
             button.setText(value);
             button.setEnabled(!value.isEmpty());
         }
+    }
+
+    private String textBeforeCursor() {
+        InputConnection connection = getCurrentInputConnection();
+        if (connection == null) return "";
+        CharSequence before = connection.getTextBeforeCursor(160, 0);
+        return before == null ? "" : before.toString();
     }
 
     private void acceptSuggestion(String suggestion) {
