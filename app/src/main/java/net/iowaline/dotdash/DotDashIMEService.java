@@ -95,7 +95,9 @@ public class DotDashIMEService extends InputMethodService implements
     @Override
     public void onCreate() {
         super.onCreate();
-        predictionEngine = new PredictionEngine(getAssets());
+        predictionEngine = new PredictionEngine(this, () -> {
+            if (inputView != null) inputView.post(this::refreshSuggestions);
+        });
         PreferenceManager.setDefaultValues(this, R.xml.prefs, false);
 
         // TODO: Fetch prefs via a background thread, as described here:
@@ -191,6 +193,12 @@ public class DotDashIMEService extends InputMethodService implements
             }
         }
         charInProgress = new StringBuilder(maxCodeLength);
+    }
+
+    @Override
+    public void onDestroy() {
+        if (predictionEngine != null) predictionEngine.close();
+        super.onDestroy();
     }
 
     /**
