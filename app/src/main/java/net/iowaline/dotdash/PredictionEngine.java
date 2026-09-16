@@ -37,6 +37,7 @@ final class PredictionEngine {
     private final List<String> loadingTags = new ArrayList<>();
     private final ExecutorService loader = Executors.newSingleThreadExecutor();
     private final SystemSpellChecker systemSpellChecker;
+    private final PersonalLanguageModel personalModel;
     private volatile String currentTag = "pt-BR";
     private volatile boolean closed;
 
@@ -48,6 +49,7 @@ final class PredictionEngine {
         addModel("pt-BR", "language/pt-BR.ngram");
         addModel("en-US", "language/en-US.ngram");
         systemSpellChecker = new SystemSpellChecker(context, listener::onSuggestionsChanged);
+        personalModel = new PersonalLanguageModel(context);
         systemSpellChecker.setLanguage(currentTag);
         loadPack(currentTag);
     }
@@ -97,8 +99,23 @@ final class PredictionEngine {
         NgramLanguageModel model = languageModels.get(currentTag);
         List<String> predicted = model == null ? Collections.emptyList()
                 : model.suggest(context.previousWord, context.prefix, 8);
+        List<String> personal = personalModel.suggest(
+                currentTag, context.previousWord, context.prefix, 8);
         return systemSpellChecker.suggest(context.prefix,
-                NgramLanguageModel.merge(predicted, local), 3);
+                NgramLanguageModel.merge(personal,
+                        NgramLanguageModel.merge(predicted, local)), 3);
+    }
+
+    void learnCompletedWord(String textBeforeCursor) {
+        NgramLanguageModel.Context context = NgramLanguageModel.contextOf(textBeforeCursor);
+        if (!context.prefix.isEmpty()) {
+            personalModel.learn(currentTag, context.previousWord, context.prefix);
+        }
+    }
+
+    void learnAcceptedSuggestion(String textBeforeCursor, String suggestion) {
+        NgramLanguageModel.Context context = NgramLanguageModel.contextOf(textBeforeCursor);
+        personalModel.learn(currentTag, context.previousWord, suggestion);
     }
 
     String currentLabel() {
@@ -119,6 +136,7 @@ final class PredictionEngine {
         closed = true;
         loader.shutdownNow();
         systemSpellChecker.close();
+        personalModel.close();
         synchronized (loadedPacks) {
             loadedPacks.clear();
             loadingTags.clear();
