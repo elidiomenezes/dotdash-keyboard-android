@@ -43,6 +43,7 @@ public class DotDashIMEService extends InputMethodService implements
     private final List<Button> suggestionButtons = new ArrayList<>();
     private int accentKeyIndex;
     private boolean predictionAllowed = true;
+    private boolean personalLearningAllowed = true;
 
     private static final int CAPS_LOCK_OFF = 0;
     private static final int CAPS_LOCK_NEXT = 1;
@@ -372,6 +373,7 @@ public class DotDashIMEService extends InputMethodService implements
                 inputView.iambic_both_pressed = false;
 
                 if (charInProgress.length() == 0) {
+                    learnCurrentWord();
                     getCurrentInputConnection().commitText(" ", 1);
                     refreshSuggestions();
                 } else {
@@ -437,6 +439,7 @@ public class DotDashIMEService extends InputMethodService implements
         }
 
         if (curCharMatch.contentEquals("\n")) {
+            learnCurrentWord();
             sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER);
         } else if (curCharMatch.contentEquals("END")) {
             requestHideSelf(0);
@@ -612,6 +615,8 @@ public class DotDashIMEService extends InputMethodService implements
                 && variation != InputType.TYPE_TEXT_VARIATION_PASSWORD
                 && variation != InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
                 && variation != InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD;
+        personalLearningAllowed = predictionAllowed
+                && (info.imeOptions & EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING) == 0;
 
 //		// Wrapping this in a try/catch block to avoid crashes in Android 2.1
 //		// and earlier
@@ -751,15 +756,25 @@ public class DotDashIMEService extends InputMethodService implements
         return before == null ? "" : before.toString();
     }
 
+    private void learnCurrentWord() {
+        if (personalLearningAllowed && predictionEngine != null) {
+            predictionEngine.learnCompletedWord(textBeforeCursor());
+        }
+    }
+
     private void acceptSuggestion(String suggestion) {
         if (suggestion.isEmpty()) return;
         InputConnection connection = getCurrentInputConnection();
         if (connection == null) return;
+        String before = textBeforeCursor();
         String word = currentWord();
         connection.beginBatchEdit();
         connection.deleteSurroundingText(word.length(), 0);
         connection.commitText(suggestion + " ", 1);
         connection.endBatchEdit();
+        if (personalLearningAllowed) {
+            predictionEngine.learnAcceptedSuggestion(before, suggestion);
+        }
         refreshSuggestions();
     }
 
