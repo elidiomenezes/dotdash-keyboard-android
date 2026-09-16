@@ -8,8 +8,8 @@ android {
         applicationId "io.github.dotdashmodern.keyboard"
         minSdk 23
         targetSdk 35
-        versionCode 24
-        versionName "2.3.0-system-prediction"
+        versionCode 25
+        versionName "2.3.1-lazy-prediction"
     }
 
     buildTypes {
