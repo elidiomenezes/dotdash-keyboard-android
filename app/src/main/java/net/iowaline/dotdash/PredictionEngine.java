@@ -15,6 +15,7 @@ final class PredictionEngine {
     interface Listener { void onSuggestionsChanged(); }
 
     private final Map<String, LanguagePack> packs = new LinkedHashMap<>();
+    private final Map<String, NgramLanguageModel> languageModels = new LinkedHashMap<>();
     private final SystemSpellChecker systemSpellChecker;
     private String currentTag = "pt-BR";
 
@@ -22,8 +23,18 @@ final class PredictionEngine {
         AssetManager assets = context.getAssets();
         addPack(assets, "pt-BR", "PT", "language/pt-BR.dat");
         addPack(assets, "en-US", "EN", "language/en-US.dat");
+        addModel(assets, "pt-BR", "language/pt-BR.ngram");
+        addModel(assets, "en-US", "language/en-US.ngram");
         systemSpellChecker = new SystemSpellChecker(context, listener::onSuggestionsChanged);
         systemSpellChecker.setLanguage(currentTag);
+    }
+
+    private void addModel(AssetManager assets, String tag, String path) {
+        try {
+            languageModels.put(tag, new NgramLanguageModel(assets, path));
+        } catch (IOException ignored) {
+            // Prefix completion remains available if an optional model is broken.
+        }
     }
 
     private void addPack(AssetManager assets, String tag, String label, String path) {
@@ -34,10 +45,16 @@ final class PredictionEngine {
         }
     }
 
-    List<String> suggest(String prefix) {
+    List<String> suggest(String textBeforeCursor) {
+        NgramLanguageModel.Context context = NgramLanguageModel.contextOf(textBeforeCursor);
         LanguagePack pack = packs.get(currentTag);
-        List<String> local = pack == null ? Collections.emptyList() : pack.suggest(prefix, 6);
-        return systemSpellChecker.suggest(prefix, local, 3);
+        List<String> local = pack == null || context.prefix.isEmpty()
+                ? Collections.emptyList() : pack.suggest(context.prefix, 8);
+        NgramLanguageModel model = languageModels.get(currentTag);
+        List<String> predicted = model == null ? Collections.emptyList()
+                : model.suggest(context.previousWord, context.prefix, 8);
+        return systemSpellChecker.suggest(context.prefix,
+                NgramLanguageModel.merge(predicted, local), 3);
     }
 
     LanguagePack current() { return packs.get(currentTag); }
