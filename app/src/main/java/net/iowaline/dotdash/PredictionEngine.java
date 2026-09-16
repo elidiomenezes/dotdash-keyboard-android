@@ -101,9 +101,53 @@ final class PredictionEngine {
                 : model.suggest(context.previousWord, context.prefix, 8);
         List<String> personal = personalModel.suggest(
                 currentTag, context.previousWord, context.prefix, 8);
-        return systemSpellChecker.suggest(context.prefix,
+        List<String> suggestions = systemSpellChecker.suggest(context.prefix,
                 NgramLanguageModel.merge(personal,
                         NgramLanguageModel.merge(predicted, local)), 3);
+        return preserveTypedCapitalization(context.prefix, suggestions);
+    }
+
+    private static List<String> preserveTypedCapitalization(
+            String prefix, List<String> suggestions) {
+        if (prefix.isEmpty()) return suggestions;
+        boolean hasLetter = false;
+        boolean allUppercase = true;
+        for (int offset = 0; offset < prefix.length();) {
+            int codePoint = prefix.codePointAt(offset);
+            if (Character.isLetter(codePoint)) {
+                hasLetter = true;
+                if (!Character.isUpperCase(codePoint)) allUppercase = false;
+            }
+            offset += Character.charCount(codePoint);
+        }
+
+        List<String> adjusted = new ArrayList<>(suggestions.size());
+        for (String candidate : suggestions) {
+            if (hasLetter && allUppercase) {
+                adjusted.add(candidate.toUpperCase(java.util.Locale.ROOT));
+            } else if (candidate.length() >= prefix.length()
+                    && candidate.regionMatches(true, 0, prefix, 0, prefix.length())) {
+                adjusted.add(prefix + candidate.substring(prefix.length()));
+            } else {
+                adjusted.add(applyCasePattern(prefix, candidate));
+            }
+        }
+        return adjusted;
+    }
+
+    private static String applyCasePattern(String prefix, String candidate) {
+        StringBuilder result = new StringBuilder(candidate);
+        int length = Math.min(prefix.length(), result.length());
+        for (int i = 0; i < length; i++) {
+            char typed = prefix.charAt(i);
+            char suggested = result.charAt(i);
+            if (Character.isUpperCase(typed)) {
+                result.setCharAt(i, Character.toUpperCase(suggested));
+            } else if (Character.isLowerCase(typed)) {
+                result.setCharAt(i, Character.toLowerCase(suggested));
+            }
+        }
+        return result.toString();
     }
 
     void learnCompletedWord(String textBeforeCursor) {
