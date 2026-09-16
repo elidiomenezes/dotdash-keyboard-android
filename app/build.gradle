@@ -8,8 +8,8 @@ android {
         applicationId "io.github.dotdashmodern.keyboard"
         minSdk 23
         targetSdk 35
-        versionCode 26
-        versionName "2.4.0-personal-learning"
+        versionCode 27
+        versionName "2.4.1-preserve-capitalization"
     }
 
     buildTypes {
